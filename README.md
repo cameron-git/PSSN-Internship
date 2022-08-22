@@ -12,3 +12,13 @@
 ### Resources
 
 - [Norse Pytorch SSN Library](https://github.com/norse/norse)
+
+## Abstract
+
+This repo contains code and results I obtained as part of an internship researching SNNs
+
+- **TestData.xlsx** Training results and parameters. Useful for comparing alternative implementations
+- **PSSN_Presentation** A presentations with some visuals describing obtained results and findings
+
+## Next Steps
+
