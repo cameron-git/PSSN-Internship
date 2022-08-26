@@ -995,4 +995,3 @@ Useful for large datasets
 """
 minibatch(input_data::AbstractArray{Bool,3}, output_data::AbstractArray{Bool,3}, minibatch_size::Int64) =
     [(input_data[:, :, i], output_data[:, :, i]) for i in Iterators.partition(Random.shuffle(collect(1:size(input_data, 3))), (minibatch_size > 0 ? minibatch_size : size(input_data, 3)))]
-

@@ -3,6 +3,7 @@ include("PSSN.jl") # Library include
 using Plots
 using FileIO           # Saving and Loading premade training data, see DataEncoding.jl
 
+
 # Constants
 INPUTS = 4
 HIDDEN = [50]
@@ -20,10 +21,10 @@ test_x = load(file, "test_x")#[:,1:10,:]
 test_y = load(file, "test_y")#[:,1:10,:]
 
 # Defining the model
-network = Network(INPUTS, OUTPUTS, HIDDEN)
+network = Network(INPUTS, OUTPUTS)
 
 # Training
-accuracy_history, loss_history = @time train_em_m!(network, train_x, train_y, test_x, test_y; C=3, lr=lr)
+accuracy_history, loss_history = @time train!(network, train_x, train_y, test_x, test_y;  lr=lr)
 
 # Plot training accuracy and loss progress
 display(plot(ylims=(-250, 0), loss_history, title="lr=$lr k=$k", label=nothing, xlabel="Epoch", ylabel="Loss"))
