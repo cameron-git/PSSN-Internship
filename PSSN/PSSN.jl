@@ -226,9 +226,9 @@ end
 """
 # Fully Observed
 
-Batch trains a fully observed network using the momentum method
+Batch trains a fully observed network using the Momentum Method
 
-See Algorithm 4 from https://arxiv.org/pdf/2103.01327.pdf
+For Momentum Method see Algorithm 4 from https://arxiv.org/pdf/2103.01327.pdf
 
 ## Args
 
@@ -265,8 +265,11 @@ function train_m!(network::FONetwork, train_x::AbstractArray{Bool,3}, train_y::A
     @printf "Training: Fully Observed with momentum\n"
     ϵ = lr
     mb = minibatch(train_x, train_y, minibatch_size)
+
+    # Stores training information to return
     accuracy_history = []
     loss_history = []
+
     P = patience
     max_LB = -Inf
     epoch = 0
@@ -297,6 +300,7 @@ function train_m!(network::FONetwork, train_x::AbstractArray{Bool,3}, train_y::A
             P -= 1
         end
 
+        # Iterations over minibatches
         @progress for (x, y) in mb
 
             # Reset training variables
@@ -767,14 +771,58 @@ function train_em!(network::PONetwork, train_x::AbstractArray{Bool,3}, train_y::
     accuracy_history, loss_history
 end
 
+"""
+# Partially Observed
+
+Batch trains a partially observed network with multiple samples using Expectation Maximisation and the Momentum Method
+
+For Expectation Maximisation see https://arxiv.org/pdf/2102.03280.pdf
+
+For Momentum Method see Algorithm 4 from https://arxiv.org/pdf/2103.01327.pdf
+
+## Args
+
+`network`: Partially observed network
+
+`train_x[neuron, time, sample]`: Training known input neuron values
+
+`train_y[neuron, time, sample]`: Training known output neuron values
+
+`test_x[neuron, time, sample]`: Test known input neuron values
+
+`test_y[neuron, time, sample]`: Test known output neuron values
+
+`lr`: Learning rate
+
+`τ`: Initial learning period
+
+`patience`: Number of training loops to complete after reaching max LB
+
+`β1`: Gradient time averaging constant
+
+`β2`: Gradient squared time averaging constant
+
+`minibatch_size`: Size of minibatch to use. Default value of `0` uses the whole batch
+
+`C`: Number of compartments to use
+
+## Return
+
+`accuracy[epoch], loss[epoch]`: Arrays with accuracy and loss values determined at 100 epochs
+
+## Method
+"""
 function train_em_m!(network::PONetwork, train_x::AbstractArray{Bool,3}, train_y::AbstractArray{Bool,3}, test_x::AbstractArray{Bool,3}, test_y::AbstractArray{Bool,3}; τ::Int64=10, patience::Int64=20, minibatch_size::Int64=0, C::Int64=5, β1::Float64=0., β2::Float64=0., lr::Float64=0.1)
 
     print("Training Started: Partially Observed with Expectation Maximisation using $C Compartments - β1:$β1 β2:$β2 lr:$lr τ:$τ patience:$patience minibatch_size=$minibatch_size\n")
     ϵ = lr
+
+    # Stores training information to return
     accuracy_history = []
     loss_history = []
-    l = zeros(C)
-    mb = minibatch(train_x, train_y, minibatch_size)
+
+    l = zeros(C) # Allocating loss variable
+    mb = minibatch(train_x, train_y, minibatch_size) # Generates minibatches
     epoch = 0
     P = patience
     max_LB = -Inf
@@ -788,7 +836,7 @@ function train_em_m!(network::PONetwork, train_x::AbstractArray{Bool,3}, train_y
         # if τ < epoch
         #     ϵ = lr * τ / epoch
         # end
-        ϵ = ϵ * 0.97
+        ϵ = ϵ * 0.97 # Training was slightly more consistent with this than the above method. This is due to the training being slow and picking patience and τ to optimise training time. The above method would might be better if you aimed for longer but more accurate training
 
         # Accuracy and cost
         sigma, spikes = evaluate(network, test_x)
@@ -806,11 +854,12 @@ function train_em_m!(network::PONetwork, train_x::AbstractArray{Bool,3}, train_y
             P -= 1
         end
 
+        # Iterations over minibatches
         @progress for (x, y) in mb
 
             # Reset trainng variables
             N, T, S = size(x)
-            ∇bias = [zeros(length(layer.bias), S) for c = 1:C, layer in network.layers]
+            ∇bias = [zeros(length(layer.bias), S) for c = 1:C, layer in network.layers] # Each layer and compartment has its own gradient calculated. A the compartment gradient with loss products are then averaged to find a single gradient for each layer
             ∇weights = [zeros(size(layer.weights)) for c = 1:C, layer in network.layers]
             ∇r_weight = [zeros(length(layer.r_weight), S) for c = 1:C, layer in network.layers]
 
@@ -889,7 +938,7 @@ function train_em_m!(network::PONetwork, train_x::AbstractArray{Bool,3}, train_y
                 network.layers[i].weights += ϵ .* ∇weights_bar[i] ./ .√∇weights²_bar[i]
                 network.layers[i].r_weight += ϵ .* ∇r_weight_bar[i] ./ .√∇r_weight²_bar[i]
 
-                network.layers[i].r_weight[network.layers[i].r_weight.>0] .= 0
+                network.layers[i].r_weight[network.layers[i].r_weight.>0] .= 0 # Ensures that recurrent weights are negative or 0. The weights 
             end
         end
     end
@@ -920,7 +969,7 @@ function spike(x)
 end
 
 """
-Calculate the firing probability
+# Calculate the firing probability
 """
 function σ(layer::Layer, f_trace::AbstractArray{Float64}, b_trace::AbstractArray{Float64})
     σ.(layer.weights * f_trace .+ layer.r_weight .* b_trace .+ layer.bias)
@@ -932,12 +981,15 @@ end
 """
 # Sigmoid function
 """
-function σ(x)
+function σ(x) # If you use a very high learning rate some times this can output NaN which breaks training I couldnt the the function to replicate so its possible NaN was sent in as input due to some other issue (maybe a memory bug with julia?)
     1 / (1 + exp(-x))
 end
 
 # log_px(x, u) = -log((1 + exp(-sign(x - 1 / 2) * u)))
 
+"""
+# Log Likelihood
+"""
 function log_p(x, σ)
     s = σ[:, 2:end, :]
     x = x[:, 2:end, :]
@@ -948,7 +1000,8 @@ function log_p(x, σ)
 end
 
 """
-Inplace convolution, not currently used
+# Inplace convolution
+Not currently used, but would be for using custom kernel shapes
 """
 function iconv(s, k)
     l = length(s)
@@ -958,8 +1011,32 @@ end
 
 ## Data Wrangling
 
+"""
+Encodes the correct neuron to be 1 for all time stamps and 0 for incorrect neurons
+
+Works best like this, however if more sparsity is desired use the following on the encoded output
+```
+encoded_data[encoded_data .= 1] = ifelse(rand() > density, 1 , 0)
+```
+Where `density` is the desired density of the correct neuron
+"""
 label_encode(y, T) = [b == c for c = sort(unique(y)), t = 1:T, b = y]
 
+"""
+# Poisson Data Encoder
+
+## Args
+
+`input[neuron, sample]` The values to encoded for each neuron and sample. The values should be normalised to between 0 and 1
+
+`T` The number of time stamps to use
+
+`max_rate` The maximum firing rate or spike density. Higher is better but as sparsity cost.
+
+## Return
+
+`encoded_data[neuron, time, sample]`
+"""
 function poisson_encode(input, T, max_rate=0.5)
     out = rand(Float64, (size(input)..., T)) .< max_rate * input
     permutedims(Array(out), (1, 3, 2))
@@ -969,14 +1046,24 @@ function logsoftmax(x)
     x .-= maximum(x)
 end
 
+"""
+Determines which neuron has the most spikes over time
+
+When given an input of `[neuron, time, sample]` returns decoded output of `[sample]`
+"""
 decode(x) = mapslices(argmax, sum(x, dims=2), dims=1)
 
+"""
+Mean spike accuracy rate
+"""
 function spike_accuracy(y, ŷ)
     mean(y .== ŷ)
 end
 
 """
 Normalises data with μ 0 and σ 1
+
+Partially designed to softmax the iris dataset for encoding
 """
 function normalize_iris(input)
     for (i, feature) in enumerate(eachcol(input))

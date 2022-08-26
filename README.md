@@ -31,3 +31,5 @@ This repo contains code and results I obtained as part of an internship research
 ## Next Steps
 
 - Test PSSN implementation on more diverse training problems
+- Fully and Partially Observed models can potentially be combined into a single function using EM
+- Port to FluxML or Pytorch for potential performance gain and possibility to utilize back-propagation with the reparameterization trick
