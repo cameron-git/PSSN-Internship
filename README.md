@@ -20,5 +20,11 @@ This repo contains code and results I obtained as part of an internship research
 - **TestData.xlsx** Training results and parameters. Useful for comparing alternative implementations
 - **PSSN_Presentation.pptx** A presentations with some visuals describing obtained results and findings
 
+## Set Up
+
+- Run the PSSN/DataEncoding.jl file to generate the encoded data
+- Run Norse-Pytorch/norse-3layer.ipynb to train the norse demo, you can select Iris or MNIST dataset
+- Run PSSN/Main.jl to train the julia model. PSSN/PSSN.jl contains the various funtions and structs to define and train a network
+
 ## Next Steps
 
