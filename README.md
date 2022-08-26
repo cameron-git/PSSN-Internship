@@ -28,3 +28,4 @@ This repo contains code and results I obtained as part of an internship research
 
 ## Next Steps
 
+- Test PSSN implementation on more diverse training problems
