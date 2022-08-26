@@ -6,7 +6,7 @@ using Images
 using ImageInTerminal
 using FileIO
 
-include("PartiallyObserved.jl") # Library include
+include("PSSN.jl") # Library include
 
 T = 32
 

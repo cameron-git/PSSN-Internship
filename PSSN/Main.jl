@@ -1,4 +1,4 @@
-include("PartiallyObserved.jl") # Library include
+include("PSSN.jl") # Library include
 
 using Plots
 using FileIO           # Saving and Loading premade training data, see DataEncoding.jl
