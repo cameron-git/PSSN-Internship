@@ -19,6 +19,8 @@ This repo contains code and results I obtained as part of an internship research
 
 - **TestData.xlsx** Training results and parameters. Useful for comparing alternative implementations
 - **PSSN_Presentation.pptx** A presentations with some visuals describing obtained results and findings
+- **PSSN/** Julia PSSN implementation
+- **Norse-Pytorch/** Norse demo for comparison
 
 ## Set Up
 
